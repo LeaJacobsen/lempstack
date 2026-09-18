@@ -59,3 +59,11 @@ resource "azurerm_network_security_group" "lamp" {
     destination_address_prefix = "*"
   }
 }
+
+resource "azurerm_public_ip" "lamp" {
+  name                = "lamp-public-ip"
+  location            = azurerm_resource_group.lamp.location
+  resource_group_name = azurerm_resource_group.lamp.name
+  allocation_method   = "Static"
+  sku                 = "Standard"
+}
