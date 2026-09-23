@@ -90,7 +90,7 @@ resource "azurerm_linux_virtual_machine" "lamp" {
   name                = "lamp-vm"
   resource_group_name = azurerm_resource_group.lamp.name
   location            = azurerm_resource_group.lamp.location
-  size                = "Standard_B1ms"
+  size                = "Standard_D2as_v5"
   admin_username      = "lampadmin"
 
 
@@ -145,3 +145,4 @@ resource "azurerm_virtual_machine_data_disk_attachment" "media" {
   lun                = "10"
   caching            = "ReadWrite"
 }
+
