@@ -1,0 +1,30 @@
+#cloud-config
+package_update: true
+packages:
+  - docker.io
+  - docker-compose-v2
+
+write_files:
+  - path: /opt/lamp/docker-compose.yml
+    encoding: b64
+    content: ${docker_compose_b64}
+  - path: /opt/lamp/.env
+    encoding: b64
+    content: ${env_b64}
+  - path: /opt/lamp/app/index.php
+    encoding: b64
+    content: ${app_index_b64}
+  - path: /opt/lamp/nginx/default.conf
+    encoding: b64
+    content: ${nginx_conf_b64}
+  - path: /opt/lamp/php/Dockerfile
+    encoding: b64
+    content: ${php_dockerfile_b64}
+  - path: /opt/lamp/varnish/default.vcl
+    encoding: b64
+    content: ${varnish_vcl_b64}
+
+runcmd:
+  - systemctl enable docker
+  - systemctl start docker
+  - cd /opt/lamp && docker compose up -d --build

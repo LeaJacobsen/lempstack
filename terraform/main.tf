@@ -93,12 +93,24 @@ resource "azurerm_linux_virtual_machine" "lamp" {
   size                = "Standard_B1ms"
   admin_username      = "lampadmin"
 
+
   network_interface_ids = [
     azurerm_network_interface.lamp.id,
   ]
 
   disable_password_authentication = true
-  custom_data                     = base64encode(file("${path.module}/cloud-init.yaml"))
+  custom_data = base64encode(local.cloud_init)
+
+locals {
+  cloud_init = templatefile("${path.module}/cloud-init.tftpl", {
+    docker_compose_b64 = base64encode(file("${path.module}/../docker-compose.yml"))
+    env_b64             = base64encode(file("${path.module}/../.env"))
+    app_index_b64        = base64encode(file("${path.module}/../app/index.php"))
+    nginx_conf_b64       = base64encode(file("${path.module}/../nginx/default.conf"))
+    php_dockerfile_b64   = base64encode(file("${path.module}/../php/Dockerfile"))
+    varnish_vcl_b64      = base64encode(file("${path.module}/../varnish/default.vcl"))
+  })
+}
 
   admin_ssh_key {
     username   = "lampadmin"
