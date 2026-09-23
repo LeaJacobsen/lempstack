@@ -25,6 +25,12 @@ write_files:
     content: ${varnish_vcl_b64}
 
 runcmd:
+  - mkdir -p /mnt/media
+  - if ! blkid /dev/disk/by-lun/10; then mkfs.ext4 /dev/disk/by-lun/10; fi
+  - mount /dev/disk/by-lun/10 /mnt/media
+  - echo "/dev/disk/by-lun/10  /mnt/media  ext4  defaults,nofail  0  2" >> /etc/fstab
+  - chown -R 33:33 /mnt/media
   - systemctl enable docker
   - systemctl start docker
   - cd /opt/lamp && docker compose up -d --build
+

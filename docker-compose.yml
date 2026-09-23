@@ -15,6 +15,7 @@ services:
     restart: unless-stopped
     volumes:
       - ./app:/var/www/html
+      - /mnt/media:/var/www/media
     environment:
       DB_HOST: db
       DB_NAME: ${DB_NAME}
@@ -29,6 +30,7 @@ services:
     volumes:
       - ./app:/var/www/html
       - ./nginx/default.conf:/etc/nginx/conf.d/default.conf
+      - /mnt/media:/var/www/media:ro
     depends_on:
       - php
 

@@ -101,17 +101,6 @@ resource "azurerm_linux_virtual_machine" "lamp" {
   disable_password_authentication = true
   custom_data = base64encode(local.cloud_init)
 
-locals {
-  cloud_init = templatefile("${path.module}/cloud-init.tftpl", {
-    docker_compose_b64 = base64encode(file("${path.module}/../docker-compose.yml"))
-    env_b64             = base64encode(file("${path.module}/../.env"))
-    app_index_b64        = base64encode(file("${path.module}/../app/index.php"))
-    nginx_conf_b64       = base64encode(file("${path.module}/../nginx/default.conf"))
-    php_dockerfile_b64   = base64encode(file("${path.module}/../php/Dockerfile"))
-    varnish_vcl_b64      = base64encode(file("${path.module}/../varnish/default.vcl"))
-  })
-}
-
   admin_ssh_key {
     username   = "lampadmin"
     public_key = file("/home/lea/.ssh/id_ed25519.pub")
@@ -128,4 +117,31 @@ locals {
     sku       = "server"
     version   = "latest"
   }
+}
+
+   locals {
+     cloud_init = templatefile("${path.module}/cloud-init.tftpl", {
+       docker_compose_b64 = base64encode(file("${path.module}/../docker-compose.yml"))
+       env_b64             = base64encode(file("${path.module}/../.env"))
+       app_index_b64        = base64encode(file("${path.module}/../app/index.php"))
+       nginx_conf_b64       = base64encode(file("${path.module}/../nginx/default.conf"))
+       php_dockerfile_b64   = base64encode(file("${path.module}/../php/Dockerfile"))
+       varnish_vcl_b64      = base64encode(file("${path.module}/../varnish/default.vcl"))
+     })
+   }
+
+resource "azurerm_managed_disk" "media" {
+  name                 = "lamp-media-disk"
+  location             = azurerm_resource_group.lamp.location
+  resource_group_name  = azurerm_resource_group.lamp.name
+  storage_account_type = "Standard_LRS"
+  create_option        = "Empty"
+  disk_size_gb         = 32
+}
+
+resource "azurerm_virtual_machine_data_disk_attachment" "media" {
+  managed_disk_id    = azurerm_managed_disk.media.id
+  virtual_machine_id = azurerm_linux_virtual_machine.lamp.id
+  lun                = "10"
+  caching            = "ReadWrite"
 }
