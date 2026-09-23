@@ -67,3 +67,53 @@ resource "azurerm_public_ip" "lamp" {
   allocation_method   = "Static"
   sku                 = "Standard"
 }
+
+resource "azurerm_network_interface" "lamp" {
+  name                = "lamp-nic"
+  location            = azurerm_resource_group.lamp.location
+  resource_group_name = azurerm_resource_group.lamp.name
+
+  ip_configuration {
+    name                          = "internal"
+    subnet_id                     = azurerm_subnet.lamp.id
+    private_ip_address_allocation = "Dynamic"
+    public_ip_address_id          = azurerm_public_ip.lamp.id
+  }
+}
+
+resource "azurerm_network_interface_security_group_association" "lamp" {
+  network_interface_id      = azurerm_network_interface.lamp.id
+  network_security_group_id = azurerm_network_security_group.lamp.id
+}
+
+resource "azurerm_linux_virtual_machine" "lamp" {
+  name                = "lamp-vm"
+  resource_group_name = azurerm_resource_group.lamp.name
+  location            = azurerm_resource_group.lamp.location
+  size                = "Standard_B1ms"
+  admin_username      = "lampadmin"
+
+  network_interface_ids = [
+    azurerm_network_interface.lamp.id,
+  ]
+
+  disable_password_authentication = true
+  custom_data                     = base64encode(file("${path.module}/cloud-init.yaml"))
+
+  admin_ssh_key {
+    username   = "lampadmin"
+    public_key = file("/home/lea/.ssh/id_ed25519.pub")
+  }
+
+  os_disk {
+    caching              = "ReadWrite"
+    storage_account_type = "Standard_LRS"
+  }
+
+  source_image_reference {
+    publisher = "Canonical"
+    offer     = "ubuntu-24_04-lts"
+    sku       = "server"
+    version   = "latest"
+  }
+}
