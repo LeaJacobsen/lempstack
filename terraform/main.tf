@@ -117,6 +117,10 @@ resource "azurerm_linux_virtual_machine" "lamp" {
     sku       = "server"
     version   = "latest"
   }
+
+  lifecycle {
+    ignore_changes = [custom_data]
+  }
 }
 
    locals {
