@@ -35,6 +35,8 @@ services:
       - php
 
   varnish:
+    hostname: varnish
+    depends_on:
     image: varnish:7.5
     restart: unless-stopped
     ports:
@@ -46,6 +48,7 @@ services:
       - nginx
 
   varnish-exporter:
+    hostname: varnish
     image: jlcox1970/prometheus-varnish-exporter:7.5.0-1
     container_name: varnish-exporter
     restart: unless-stopped
