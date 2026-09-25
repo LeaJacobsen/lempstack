@@ -41,8 +41,21 @@ services:
       - "80:80"
     volumes:
       - ./varnish/default.vcl:/etc/varnish/default.vcl
+      - varnish_shm:/var/lib/varnish
     depends_on:
       - nginx
+
+  varnish-exporter:
+    image: jonnenauha/prometheus_varnish_exporter:latest
+    container_name: varnish-exporter
+    restart: unless-stopped
+    pid: "service:varnish"
+    volumes:
+      - varnish_shm:/var/lib/varnish
+    depends_on:
+      - varnish
+    expose:
+      - "9131"
 
   node-exporter:
     image: prom/node-exporter:v1.8.2
@@ -91,3 +104,4 @@ volumes:
   db_data:
   prometheus_data:
   grafana_data:
+  varnish_shm:
