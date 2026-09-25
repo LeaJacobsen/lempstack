@@ -155,6 +155,53 @@
           "refId": "A"
         }
       ]
+    },
+    {
+      "id": 7,
+      "type": "gauge",
+      "title": "Azure VM – Varnish Cache Hit Ratio",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 24 },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "min": 0,
+          "max": 100,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "red", "value": null },
+              { "color": "yellow", "value": 50 },
+              { "color": "green", "value": 80 }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "expr": "100 * varnish_main_cache_hit / clamp_min(varnish_main_cache_hit + varnish_main_cache_miss, 1)",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "id": 8,
+      "type": "timeseries",
+      "title": "Azure VM – Varnish Requests",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 24 },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "reqps"
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "expr": "rate(varnish_main_client_req[5m])",
+          "refId": "A",
+          "legendFormat": "requests/sec"
+        }
+      ]
     }
   ]
 }
