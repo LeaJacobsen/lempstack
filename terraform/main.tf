@@ -55,7 +55,7 @@ resource "azurerm_network_security_group" "lamp" {
     protocol                   = "Tcp"
     source_port_range          = "*"
     destination_port_range     = "22"
-    source_address_prefix      = "185.73.72.112/32"
+    source_address_prefixes    = ["83.89.61.94/32", "152.115.77.163/32"]
     destination_address_prefix = "*"
   }
 }
