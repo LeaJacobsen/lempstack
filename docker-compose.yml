@@ -36,7 +36,6 @@ services:
 
   varnish:
     hostname: varnish
-    depends_on:
     image: varnish:7.5
     restart: unless-stopped
     ports:
