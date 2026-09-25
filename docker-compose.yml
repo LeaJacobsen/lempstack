@@ -49,6 +49,7 @@ services:
   varnish-exporter:
     hostname: varnish
     image: jlcox1970/prometheus-varnish-exporter:7.5.0-1
+    command: ["-VSM", "/var/lib/varnish/varnishd"]
     container_name: varnish-exporter
     restart: unless-stopped
     pid: "service:varnish"
