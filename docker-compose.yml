@@ -46,7 +46,7 @@ services:
       - nginx
 
   varnish-exporter:
-    image: jonnenauha/prometheus_varnish_exporter:latest
+    image: jlcox1970/prometheus-varnish-exporter:7.5.0-1
     container_name: varnish-exporter
     restart: unless-stopped
     pid: "service:varnish"
