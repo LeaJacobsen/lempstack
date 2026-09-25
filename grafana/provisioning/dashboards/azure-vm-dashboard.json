@@ -202,6 +202,37 @@
           "legendFormat": "requests/sec"
         }
       ]
+    },
+    {
+      "id": 9,
+      "type": "stat",
+      "title": "Azure VM – fail2ban Bans",
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 32 },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "red", "value": 1 }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "expr": "fail2ban_currently_banned",
+          "refId": "A",
+          "legendFormat": "Currently banned"
+        },
+        {
+          "expr": "fail2ban_total_banned",
+          "refId": "B",
+          "legendFormat": "Total banned (all-time)"
+        }
+      ]
     }
   ]
 }
