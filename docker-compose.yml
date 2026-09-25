@@ -58,8 +58,8 @@ services:
       - '--path.sysfs=/host/sys'
       - '--path.rootfs=/rootfs'
       - '--collector.filesystem.ignored-mount-points=^/(sys|proc|dev|host|etc)($$|/)'
-    expose:
-      - "9100"
+    ports:
+      - "127.0.0.1:9100:9100"
 
   prometheus:
     image: prom/prometheus:v2.54.1
@@ -70,8 +70,8 @@ services:
       - prometheus_data:/prometheus
     depends_on:
       - node-exporter
-    expose:
-      - "9090"
+    ports:
+      - "127.0.0.1:9090:9090"
 
   grafana:
     image: grafana/grafana:11.2.0
