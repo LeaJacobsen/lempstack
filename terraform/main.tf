@@ -58,6 +58,18 @@ resource "azurerm_network_security_group" "lamp" {
     source_address_prefixes    = var.admin_ssh_ips
     destination_address_prefix = "*"
   }
+
+  security_rule {
+    name                       = "Allow-MQTT-Inbound"
+    priority                   = 120
+    direction                  = "Inbound"
+    access                     = "Allow"
+    protocol                   = "Tcp"
+    source_port_range          = "*"
+    destination_port_range     = "1883"
+    source_address_prefix      = "*"
+    destination_address_prefix = "*"
+  }
 }
 
 resource "azurerm_public_ip" "lamp" {

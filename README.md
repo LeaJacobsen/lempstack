@@ -1,9 +1,13 @@
 # LEMP Stack on Azure with Terraform
 
+> **This is a LEMP stack** (Linux, Nginx, MariaDB, PHP), not LAMP.
+>
+> **Why "LAMP" appears in some places:** the assignment was called "LAMP i Azure" and allowed either Apache (LAMP) or Nginx (LEMP). The Azure resources, VM folders and users (`lamp-vm`, `lamp-rg`, `/opt/lamp`, `lampadmin`) were named after the assignment before we chose Nginx. They're kept on purpose: renaming a resource in Terraform deletes and rebuilds it, VM and disk included.
+
 A web stack (Varnish → Nginx → PHP-FPM → MariaDB) running in Docker on an Azure VM. The whole thing, from network and firewall to the running containers, is deployed with a single `terraform apply`. It's monitored with Prometheus and Grafana and tested with Playwright.
 
-**Status:** Work in progress (MQTT is being added next)
-**Context:** Udvidet netværksteknologi, Opgave 3, 3rd semester, IT-Technology at Zealand (EASJ), autumn 2026. Group project with my study group (Emil and Kerim).
+**Status:** Work in progress. MQTT broker added (Opgave 5)
+**Context:** Udvidet netværksteknologi, Opgave 3 + 5, 3rd semester, IT-Technology at Zealand (EASJ), autumn 2026. Group project with my study group (Emil and Kerim).
 
 ## Architecture
 
@@ -15,6 +19,7 @@ flowchart TD
     N -->|/media/| M[(Media disk<br/>32 GB)]
     P --> D[(MariaDB)]
     P --> M
+    S[IoT sensor<br/>Raspberry Pi] -->|MQTT :1883| Q[Mosquitto<br/>MQTT broker]
     subgraph Monitoring [Monitoring - only reachable from the VM]
       NE[Node Exporter] --> PR[Prometheus]
       VE[Varnish Exporter] --> PR
@@ -22,7 +27,7 @@ flowchart TD
     end
 ```
 
-Every part runs as its own Docker Compose service on one Ubuntu 24.04 VM. Only Varnish faces the internet. MariaDB and PHP-FPM can't be reached from outside, and the Playwright tests check that.
+Every part runs as its own Docker Compose service on one Ubuntu 24.04 VM. Only Varnish (web, port 80) and Mosquitto (MQTT, port 1883) are open to the internet. MariaDB and PHP-FPM can't be reached from outside, and the Playwright tests check that.
 
 **Why LEMP and not LAMP?** The assignment allowed either. I chose Nginx over Apache, with PHP running separately in PHP-FPM, which keeps the web server and the application in separate containers.
 
@@ -32,7 +37,7 @@ Every part runs as its own Docker Compose service on one Ubuntu 24.04 VM. Only V
 | --- | --- |
 | Resource group `lamp-rg` | Holds everything. Region: Sweden Central, chosen because it was the cheapest for our student credits |
 | Virtual network + subnet | Private network (`10.0.0.0/16`, subnet `10.0.1.0/24`) |
-| Network security group | Firewall: HTTP (80) open to everyone, SSH (22) only from known admin IP addresses |
+| Network security group | Firewall: HTTP (80) and MQTT (1883) open to everyone, SSH (22) only from known admin IP addresses |
 | Static public IP | A fixed address for the VM |
 | Network interface + NSG association | Connects the VM to the subnet and the firewall |
 | Linux VM `lamp-vm` | Ubuntu 24.04 LTS, `Standard_D2as_v5`, SSH key login only |
@@ -60,6 +65,15 @@ Uploaded media is kept off the VM's system disk and out of the database, on its 
 - **Nginx mounts it read-only** and serves it directly at `/media/`. The `^~` location means files there are never passed to PHP, so an uploaded `.php` file can't be executed.
 - **PHP mounts it read-write**, since it's the only part that creates files (uploads).
 
+## MQTT (Opgave 5)
+
+A Mosquitto broker lets IoT devices send sensor data to the VM. A broker works like a post office: a sensor (here a Raspberry Pi) posts a message to a topic such as `home/kitchen/temp`, and anyone subscribed to that topic receives it. The sender and receiver never talk to each other directly.
+
+- Runs as its own container (`eclipse-mosquitto:2`) on port 1883.
+- **No anonymous access:** clients must log in with a username and password (`allow_anonymous false`).
+- Messages are kept across restarts (`persistence true`).
+- The password file (`mosquitto/config/passwordfile`) is git-ignored and never pushed.
+
 ## Monitoring
 
 | Service | What it does |
@@ -69,7 +83,7 @@ Uploaded media is kept off the VM's system disk and out of the database, on its 
 | Prometheus | Collects all metrics every 15 seconds |
 | Grafana | The "Azure VM Monitoring" dashboard, set up automatically through provisioning |
 
-Prometheus and Node Exporter only listen on the VM's `localhost`, and the firewall only lets port 80 and 22 in. Grafana is reached through an SSH tunnel, not from the open internet.
+Prometheus and Node Exporter only listen on the VM's `localhost`, and the firewall only lets ports 80, 1883 and 22 in. Grafana is reached through an SSH tunnel, not from the open internet.
 
 ## Security
 
@@ -114,14 +128,20 @@ You need Terraform, the Azure CLI and an SSH key.
    terraform apply
    ```
 5. Open `http://<public-ip>`. The page should say "It works! Connected to the database."
+6. For MQTT, create the broker's password file on the VM (it isn't in the repo):
+   ```
+   docker compose exec mqtt mosquitto_passwd -c /mosquitto/config/passwordfile <username>
+   docker compose restart mqtt
+   ```
 
 To run the stack locally without Azure: `docker compose up -d` in the root, with a `.env` file.
 
 ## Known issues / next steps
 
-- **Monitoring isn't in cloud-init yet.** The Prometheus and Grafana config files were added after the first deploy and copied to the VM by hand, so a brand-new `terraform apply` would start the monitoring containers without their config. The fix is to add them to `cloud-init.tftpl`.
+- **Monitoring and MQTT aren't in cloud-init yet.** The Prometheus, Grafana and Mosquitto config files were added after the first deploy and copied to the VM by hand, so a brand-new `terraform apply` would start those containers without their config. The fix is to add them to `cloud-init.tftpl`.
+- **MQTT isn't encrypted.** Port 1883 is open to everyone, and although a password is required, the password and messages travel as plain text. Next step: TLS on port 8883, or limiting 1883 to known IP addresses.
 - **The SSH key path and allowed IPs are hard-coded** in `main.tf`. They should be Terraform variables set in a `terraform.tfvars` file (already git-ignored), so each teammate can use their own and IP addresses stay out of the repo.
 - **The first Playwright test has a TODO:** it checks for the absence of errors, but not yet for the success text.
 - **Finish the CIS hardening:** re-run the audit to confirm the score after the fixes, and handle the rules USG can't fix automatically (SSH `AllowUsers`, `cron.allow`).
-- **MQTT** (Mosquitto broker for an IoT lab with a Raspberry Pi sensor) is the next assignment and will be added to this stack.
+- **A real sensor:** connect the Raspberry Pi as an MQTT publisher, instead of the simulated sensor from the assignment.
 - **HTTPS** with a certificate, for example Let's Encrypt.

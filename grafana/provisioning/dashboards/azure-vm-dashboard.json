@@ -3,7 +3,7 @@
   "uid": "azure-vm-dashboard",
   "title": "Azure VM Monitoring",
   "schemaVersion": 39,
-  "version": 1,
+  "version": 2,
   "editable": true,
   "time": {
     "from": "now-6h",
@@ -12,10 +12,78 @@
   "refresh": "30s",
   "panels": [
     {
+      "id": 5,
+      "type": "stat",
+      "title": "Azure VM – Load",
+      "gridPos": { "h": 4, "w": 6, "x": 0, "y": 0 },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "expr": "node_load1",
+          "refId": "A",
+          "legendFormat": "1m load average"
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "type": "stat",
+      "title": "Azure VM – Uptime",
+      "gridPos": { "h": 4, "w": 6, "x": 6, "y": 0 },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "dtdurations"
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "expr": "time() - node_boot_time_seconds",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "id": 9,
+      "type": "stat",
+      "title": "Azure VM – fail2ban Bans",
+      "gridPos": { "h": 4, "w": 12, "x": 12, "y": 0 },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "red", "value": 1 }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "expr": "fail2ban_currently_banned",
+          "refId": "A",
+          "legendFormat": "Currently banned"
+        },
+        {
+          "expr": "fail2ban_total_banned",
+          "refId": "B",
+          "legendFormat": "Total banned (all-time)"
+        }
+      ]
+    },
+    {
       "id": 1,
       "type": "gauge",
       "title": "Azure VM – CPU",
-      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 },
+      "gridPos": { "h": 7, "w": 8, "x": 0, "y": 4 },
       "fieldConfig": {
         "defaults": {
           "unit": "percent",
@@ -43,7 +111,7 @@
       "id": 2,
       "type": "gauge",
       "title": "Azure VM – Memory",
-      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 },
+      "gridPos": { "h": 7, "w": 8, "x": 8, "y": 4 },
       "fieldConfig": {
         "defaults": {
           "unit": "percent",
@@ -71,7 +139,7 @@
       "id": 3,
       "type": "gauge",
       "title": "Azure VM – Disk",
-      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 8 },
+      "gridPos": { "h": 7, "w": 8, "x": 16, "y": 4 },
       "fieldConfig": {
         "defaults": {
           "unit": "percent",
@@ -96,71 +164,10 @@
       ]
     },
     {
-      "id": 4,
-      "type": "timeseries",
-      "title": "Azure VM – Network",
-      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 8 },
-      "fieldConfig": {
-        "defaults": {
-          "unit": "Bps"
-        },
-        "overrides": []
-      },
-      "targets": [
-        {
-          "expr": "rate(node_network_receive_bytes_total{device!=\"lo\"}[5m])",
-          "refId": "A",
-          "legendFormat": "receive {{device}}"
-        },
-        {
-          "expr": "rate(node_network_transmit_bytes_total{device!=\"lo\"}[5m])",
-          "refId": "B",
-          "legendFormat": "transmit {{device}}"
-        }
-      ]
-    },
-    {
-      "id": 5,
-      "type": "stat",
-      "title": "Azure VM – Load",
-      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 16 },
-      "fieldConfig": {
-        "defaults": {
-          "unit": "short"
-        },
-        "overrides": []
-      },
-      "targets": [
-        {
-          "expr": "node_load1",
-          "refId": "A",
-          "legendFormat": "1m load average"
-        }
-      ]
-    },
-    {
-      "id": 6,
-      "type": "stat",
-      "title": "Azure VM – Uptime",
-      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 16 },
-      "fieldConfig": {
-        "defaults": {
-          "unit": "dtdurations"
-        },
-        "overrides": []
-      },
-      "targets": [
-        {
-          "expr": "time() - node_boot_time_seconds",
-          "refId": "A"
-        }
-      ]
-    },
-    {
       "id": 7,
       "type": "gauge",
       "title": "Azure VM – Varnish Cache Hit Ratio",
-      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 24 },
+      "gridPos": { "h": 7, "w": 8, "x": 0, "y": 11 },
       "fieldConfig": {
         "defaults": {
           "unit": "percent",
@@ -188,7 +195,7 @@
       "id": 8,
       "type": "timeseries",
       "title": "Azure VM – Varnish Requests",
-      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 24 },
+      "gridPos": { "h": 7, "w": 16, "x": 8, "y": 11 },
       "fieldConfig": {
         "defaults": {
           "unit": "reqps"
@@ -204,33 +211,26 @@
       ]
     },
     {
-      "id": 9,
-      "type": "stat",
-      "title": "Azure VM – fail2ban Bans",
-      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 32 },
+      "id": 4,
+      "type": "timeseries",
+      "title": "Azure VM – Network",
+      "gridPos": { "h": 7, "w": 24, "x": 0, "y": 18 },
       "fieldConfig": {
         "defaults": {
-          "unit": "short",
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              { "color": "green", "value": null },
-              { "color": "red", "value": 1 }
-            ]
-          }
+          "unit": "Bps"
         },
         "overrides": []
       },
       "targets": [
         {
-          "expr": "fail2ban_currently_banned",
+          "expr": "rate(node_network_receive_bytes_total{device!=\"lo\"}[5m])",
           "refId": "A",
-          "legendFormat": "Currently banned"
+          "legendFormat": "receive {{device}}"
         },
         {
-          "expr": "fail2ban_total_banned",
+          "expr": "rate(node_network_transmit_bytes_total{device!=\"lo\"}[5m])",
           "refId": "B",
-          "legendFormat": "Total banned (all-time)"
+          "legendFormat": "transmit {{device}}"
         }
       ]
     }
